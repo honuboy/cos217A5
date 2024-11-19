@@ -33,29 +33,27 @@ int main(void)
         if ((iChar = getchar()) == EOF) goto endWhileLoop;
             lCharCount++;
             if (!isspace(iChar)) goto notSpace;
-                if (!iInWord) goto notInWord;
-                    lWordCount++;
-                    iInWord = FALSE;
-                notInWord:
-                goto newlineChecker;
-
+                if (!iInWord) goto newlineChecker;
+                lWordCount++;
+                iInWord = FALSE;
+                
             notSpace:
                 if (iInWord) goto newlineChecker;
-                    iInWord = TRUE;
+                iInWord = TRUE;
             
             newlineChecker:
                 if (iChar != '\n') goto whileLoop;
-                    lWordCount++;
+                lLineCount++;
             
-            goto whileLoop;
+                goto whileLoop;
 
     endWhileLoop:
 
     if (!iInWord) goto printStatement;
-        lWordCount++;
+    lWordCount++;
 
     printStatement:
-        printf("%7ld %7ld %7ld\n", lLineCount, lWordCount, lCharCount);
+    printf("%7ld %7ld %7ld\n", lLineCount, lWordCount, lCharCount);
 
     return 0;
 }
