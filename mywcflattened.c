@@ -29,31 +29,28 @@ int main(void)
 {
 
     whileLoop: 
-
         if ((iChar = getchar()) == EOF) goto endWhileLoop;
-            lCharCount++;
-            if (!isspace(iChar)) goto notSpace;
-                if (!iInWord) goto newlineChecker;
-                lWordCount++;
-                iInWord = FALSE;
-                
-            notSpace:
-                if (iInWord) goto newlineChecker;
-                iInWord = TRUE;
+        lCharCount++;
+        if (!isspace(iChar)) goto notSpace;
+        if (!iInWord) goto newlineChecker;
+        lWordCount++;
+        iInWord = FALSE;
+        goto newlineChecker;
             
-            newlineChecker:
-                if (iChar != '\n') goto whileLoop;
-                lLineCount++;
-            
-                goto whileLoop;
+    notSpace:
+        if (iInWord) goto newlineChecker;
+        iInWord = TRUE;
+    
+    newlineChecker:
+        if (iChar != '\n') goto whileLoop;
+        lLineCount++;
+        goto whileLoop;
 
     endWhileLoop:
-
-    if (!iInWord) goto printStatement;
-    lWordCount++;
+        if (!iInWord) goto printStatement;
+        lWordCount++;
 
     printStatement:
-    printf("%7ld %7ld %7ld\n", lLineCount, lWordCount, lCharCount);
-
-    return 0;
+        printf("%7ld %7ld %7ld\n", lLineCount, lWordCount, lCharCount);
+        return 0;
 }
