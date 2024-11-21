@@ -45,6 +45,7 @@ iChar:
         .equ    FALSE, 0
         .equ    TRUE, 1
 
+        .global main
 
 main: 
 
@@ -90,7 +91,7 @@ main:
     // iInWord = FALSE;
     // DO WE NEED TO DO THIS OR CAN WE JUST USE WZR TO BE FAST????????
     adr     x0, iInWord
-    mov     w1, #0 
+    mov     w1, FALSE
     str     w1, [x0]
     
     // goto newlineChecker;
@@ -105,7 +106,7 @@ main:
 
     // iInWord = TRUE;
     adr     x0, iInWord
-    mov     w1, #1
+    mov     w1, TRUE
     str     w1, [x0]
 
     newlineChecker:
