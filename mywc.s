@@ -5,24 +5,28 @@
 
         .section .rodata
 
-newlineStr:
-        .string "\n"
-
 printfFormatStr:
         .string "%7ld %7ld %7ld\n"
 
 //----------------------------------------------------------------------
-        .section .bss
+        .section .data
 
 lLineCount:
-        .skip   8
+        .quad 0
+
 lWordCount:
-        .skip   8
+        .quad 0
+
 lCharCount:
-        .skip   8
-iChar:
-        .skip   4
+        .quad 0
+
 iInWord:
+        .word FALSE
+
+//----------------------------------------------------------------------
+        .section .bss
+
+iChar:
         .skip   4
 
 //----------------------------------------------------------------------
@@ -53,9 +57,9 @@ main:
 
     // if ((iChar = getchar()) == EOF) goto endWhileLoop;
     bl      getchar
-    adr     w0, iChar
-    str     w30, [w0]
-    cmp     wzr, w30
+    adr     x0, iChar
+    str     w0, [x0]
+    cmp     w0, wzr
     bne     endWhileLoop
 
     // lCharCount++;
@@ -65,14 +69,14 @@ main:
     str     x1, [x0]
 
     // if (!isspace(iChar)) goto notSpace;
-    adr     w0, iChar
+    adr     x0, iChar
     ldr     w0, [w0]
     bl      isspace
-    cmp     wzr, w30
+    cmp     w0, wzr
     beq     notSpace
     
     // if (!iInWord) goto newlineChecker;
-    adr     w0, iInWord
+    adr     x0, iInWord
     ldr     w0, [w0]
     cmp     w0, wzr
     beq     newlineChecker
@@ -85,33 +89,33 @@ main:
     
     // iInWord = FALSE;
     // DO WE NEED TO DO THIS OR CAN WE JUST USE WZR TO BE FAST????????
-    adr     w0, FALSE
-    ldr     w0, [w0]
-    str     w0, [iInWord]
+    adr     x0, iInWord
+    mov     w1, #0 
+    str     w1, [x0]
     
     // goto newlineChecker;
     b       newlineChecker
 
     notSpace:
     // if (iInWord) goto newlineChecker;
-    adr     w0, iInWord
+    adr     x0, iInWord
     ldr     w0, [w0]
     cmp     w0, wzr
     bne     newlineChecker
 
     // iInWord = TRUE;
-    adr     w0, iInWord
-    mov     w1, 1
-    str     w1, [w0]
+    adr     x0, iInWord
+    mov     w1, #1
+    str     w1, [x0]
 
     newlineChecker:
 
     // if (iChar != '\n') goto whileLoop;
-    adr     w0, iChar
+    adr     x0, iChar
     ldr     w0, [w0]
-    mov     w1, newlineStr
+    mov     w1, #0x0A
     cmp     w0, w1
-    beq     whileLoop
+    bne     whileLoop
 
     // lLineCount++;
     adr     x0, lLineCount
@@ -122,11 +126,10 @@ main:
     // goto whileLoop;
     b whileLoop
 
-
     endWhileLoop:
 
     // if (!iInWord) goto printStatement;
-    adr     w0, iInWord
+    adr     x0, iInWord
     ldr     w0, [w0]
     cmp     w0, wzr
     beq     printStatement
