@@ -3,6 +3,11 @@
 // Author: Jonah Johnson and Jeffrey Xu
 //----------------------------------------------------------------------
 
+.equ    FALSE, 0
+.equ    TRUE, 1
+.equ    EOF, -1
+
+
         .section .rodata
 
 printfFormatStr:
@@ -42,9 +47,6 @@ iChar:
         // Must be a multiple of 16
         .equ    MAIN_STACK_BYTECOUNT, 16
 
-        .equ    FALSE, 0
-        .equ    TRUE, 1
-
         .global main
 
 main: 
@@ -58,10 +60,10 @@ main:
 
     // if ((iChar = getchar()) == EOF) goto endWhileLoop;
     bl      getchar
-    adr     x0, iChar
-    str     w0, [x0]
-    cmp     w0, wzr
-    bne     endWhileLoop
+    adr     x1, iChar
+    str     w0, [x1]
+    cmp     w0, EOF
+    beq     endWhileLoop
 
     // lCharCount++;
     adr     x0, lCharCount
@@ -73,13 +75,13 @@ main:
     adr     x0, iChar
     ldr     w0, [x0]
     bl      isspace
-    cmp     w0, wzr
+    cmp     w0, FALSE
     beq     notSpace
     
     // if (!iInWord) goto newlineChecker;
     adr     x0, iInWord
     ldr     w0, [x0]
-    cmp     w0, wzr
+    cmp     w0, FALSE
     beq     newlineChecker
 
     // lWordCount++;
@@ -101,8 +103,8 @@ main:
     // if (iInWord) goto newlineChecker;
     adr     x0, iInWord
     ldr     w0, [x0]
-    cmp     w0, wzr
-    bne     newlineChecker
+    cmp     w0, TRUE
+    beq     newlineChecker
 
     // iInWord = TRUE;
     adr     x0, iInWord
@@ -114,8 +116,7 @@ main:
     // if (iChar != '\n') goto whileLoop;
     adr     x0, iChar
     ldr     w0, [x0]
-    mov     w1, #0x0A
-    cmp     w0, w1
+    cmp     w0, '\n'
     bne     whileLoop
 
     // lLineCount++;
@@ -132,7 +133,7 @@ main:
     // if (!iInWord) goto printStatement;
     adr     x0, iInWord
     ldr     w0, [x0]
-    cmp     w0, wzr
+    cmp     w0, FALSE
     beq     printStatement
 
     // lWordCount++;
