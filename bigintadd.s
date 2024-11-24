@@ -142,14 +142,7 @@ whileLoop:
 
 // CAN WE DO THIS? OR DO WE NEED TO MAKE SLOW AND UGLY WITH LDR AND MOV AND WHATNOT
 
-
-
-
-
-
-
-        add     x0, sp, ULCARRY
-        ldr     x0, [x0]
+        ldr     x0, [sp, ULCARRY]
         str     x0, [sp, ULSUM]
 
         // ulCarry = 0;
@@ -256,15 +249,31 @@ endWhileLoop:
 
 carryOut: 
         // oSum->aulDigits[lSumLength] = 1;
-
+        ldr     x0, OSUM
+        add     x0, x0, AULDIGITS
+        ldr     x1, [sp, LSUMLENGTH]
+        add     x0, x0, x1, lsl 3
+        mov     x3, 1
+        str     x3, [x0]
 
         // lSumLength++;
+        ldr     x0, [sp, LSUMLENGTH]
+        mov     x1, [x0]
+        add     x1, x1, 1
+        str     x1, [x0]      
 
 
 setSumLength: 
         // oSum->lLength = lSumLength;
-
+        ldr     x0, OSUM
+        add     x0, x0, LLENGTH
+        ldr     x1, [sp, LSUMLENGTH]
+        str     x1, [x0]
 
         // return TRUE; epilog
+        mov     x0, TRUE
+        ldr     x30, [sp]
+        add     sp, sp, BIGINTADD_STACK_BYTECOUNT
+        ret
 
         
