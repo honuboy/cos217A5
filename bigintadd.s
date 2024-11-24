@@ -56,8 +56,6 @@ returnInt:
 
         .size BigInt_larger, (. - BigInt_larger)
 
-
-
         //--------------------------------------------------------------
         // Assign the sum of oAddend1 and oAddend2 to oSum.  oSum should
         // be distinct from oAddend1 and oAddend2.  Return 0 (FALSE) if 
@@ -65,18 +63,24 @@ returnInt:
         // int BigInt_add(BigInt_T oAddend1, BigInt_T oAddend2, 
         // BigInt_T oSum)
         //--------------------------------------------------------------
+        
+        // Must be a multiple of 16
+        .equ    BIGINTADD_STACK_BYTECOUNT, 64
 
-        .equ    BIGINTADD_STACK_BYTECOUNT, 48
+        // stack offsets
         .equ    ULCARRY, 8
         .equ    ULSUM, 16
         .equ    LINDEX, 24
         .equ    LSUMLENGTH, 32
+        .equ    OADDEND1, 40
+        .equ    OADDEND2, 48
+        .equ    OSUM, 56
+        
+        // LLENGTH, AULDIGITS: struct offsets
+        // SIZEOFUL: constant
+        .equ    LLENGTH, 0
         .equ    AULDIGITS, 8
         .equ    SIZEOFUL, 8
-        .req    OADDEND1, x5
-        .req    OADDEND2, x6
-        .req    OSUM, x7
-        
 
 BigInt_add:
         // Prolog
@@ -87,142 +91,120 @@ BigInt_add:
         // lSumLength = BigInt_larger(oAddend1->lLength, 
         // oAddend2->lLength);
 
-        ldr     OADDEND1, x0 
-        ldr     OADDEND2, x1
-        ldr     OSUM, x2
-
-        // x0 gets oAddend1->lLength, similar for x1
-        ldr     x0, [x0]
-        ldr     x1, [x1]
+        ldr     x0, [sp, OADDEND1]
+        ldr     x0, [x0, LLENGTH] 
+        ldr     x1, [sp, OADDEND2]
+        ldr     x1, [x1, LLENGTH]
 
         // call function BigInt_larger
         bl      BigInt_larger
         
         // lSumLength gets return value
-        str     x30, [sp, LSUMLENGTH]
+        str     x0, [sp, LSUMLENGTH]
 
         // Clear oSum's array if necessary.
         // if (oSum->lLength <= lSumLength) goto performAddition;
-        cmp     [OSUM], x30
+        ldr     x0, [sp, OSUM]
+        ldr     x0, [x0, LLENGTH]
+        ldr     x1, [sp, LSUMLENGTH]
+        cmp     x0, x1
         ble     performAddition
 
         // memset(oSum->aulDigits, 0, MAX_DIGITS * 
         // sizeof(unsigned long));
-        add     x0, OSUM, AULDIGITS
+        ldr     x0, [sp, OSUM]
+        add     x0, x0, AULDIGITS
         mov     w1, 0
-        mul     OSUM, MAX_DIGITS, SIZEOFUL
+        mov     x2, MAX_DIGITS
+        lsl     x2, x2, 3
         bl      memset
 
 performAddition:
         // ulCarry = 0;
-        ldr     x0, [sp, ULCARRY]
-        mov     x1, 0
-        str     x1, [x0]
+        mov     x0, 0
+        str     x0, [sp, ULCARRY]
 
         // lIndex = 0;
-        ldr     x0, [sp, LINDEX]
-        mov     x1, 0
-        str     x1, [x0]
+        mov     x0, 0
+        str     x0, [sp, LINDEX]
 
 whileLoop:
         // if (lIndex >= lSumLength) goto endWhileLoop;
-        add     x0, sp, LINDEX
-        ldr     x0, [x0]
-        add     x1, sp, LSUMLENGTH
-        ldr     x1, [x1]
+        ldr     x0, [sp, LINDEX]
+        ldr     x1, [sp, LSUMLENGTH]
         cmp     x0, x1
         bge     endWhileLoop
 
         // ulSum = ulCarry;
-
-
-
-
-
-
-// CAN WE DO THIS? OR DO WE NEED TO MAKE SLOW AND UGLY WITH LDR AND MOV AND WHATNOT
-
         ldr     x0, [sp, ULCARRY]
         str     x0, [sp, ULSUM]
 
         // ulCarry = 0;
-        ldr     x0, [sp, ULCARRY]
-        mov     x1, 0
-        str     x1, [x0]
-
+        mov     x0, 0
+        str     x0, [sp, ULCARRY]
 
         // ulSum += oAddend1->aulDigits[lIndex];
         ldr     x0, [sp, ULSUM]
-        ldr     x1, OADDEND1
+        ldr     x0, [x0]
+        ldr     x1, [sp, OADDEND1]
         add     x1, x1, AULDIGITS
         ldr     x2, [sp, LINDEX]
-        ldr     x3, [x1, x2, lsl 3]
-        ldr     x4, [x0]
-        add     x4, x4, [x3]
-        str     x0, x4
+        ldr     x2, [x1, x2, lsl 3]
+        add     x2, x2, x0
+        str     x2, [x0]
 
         // if (ulSum >= oAddend1->aulDigits[lIndex]) goto 
         // endFirstOverflowCheck;
         ldr     x0, [sp, ULSUM]
-        ldr     x1, OADDEND1
+        ldr     x1, [sp, OADDEND1]
         add     x1, x1, AULDIGITS
         ldr     x2, [sp, LINDEX]
-        ldr     x3, [x1, x2, lsl 3]
-        ldr     x4, [x0]
-        cmp     x4, x3
+        ldr     x2, [x1, x2, lsl 3]
+        cmp     x0, x2
         bge     endFirstOverflowCheck
 
         // ulCarry = 1;
-        ldr     x0, [sp, ULCARRY]
-        mov     x1, 1
-        str     x1, [x0]
+        mov     x0, 1
+        str     x0, [sp, ULCARRY]
 
 endFirstOverflowCheck:
         // ulSum += oAddend2->aulDigits[lIndex];
-
-
-// if previous logic sucks, this will too
-// just copy and paste, change OADDEND 2 TO 1
-
-
         ldr     x0, [sp, ULSUM]
-        ldr     x1, OADDEND2
+        ldr     x0, [x0]
+        ldr     x1, [sp, OADDEND2]
         add     x1, x1, AULDIGITS
         ldr     x2, [sp, LINDEX]
-        ldr     x3, [x1, x2, lsl 3]
-        ldr     x4, [x0]
-        add     x4, x4, [x3]
-        str     x0, x4
-        
-        // if (ulSum >= oAddend2->aulDigits[lIndex]) goto endSecondOverflowCheck;
+        ldr     x2, [x1, x2, lsl 3]
+        add     x2, x2, x0
+        str     x2, [x0]
+
+        // if (ulSum >= oAddend2->aulDigits[lIndex]) goto 
+        // endSecondOverflowCheck;
         ldr     x0, [sp, ULSUM]
-        ldr     x1, OADDEND2
+        ldr     x1, [sp, OADDEND2]
         add     x1, x1, AULDIGITS
         ldr     x2, [sp, LINDEX]
-        ldr     x3, [x1, x2, lsl 3]
-        ldr     x4, [x0]
-        cmp     x4, x3
+        ldr     x2, [x1, x2, lsl 3]
+        cmp     x0, x2
         bge     endSecondOverflowCheck
 
         // ulCarry = 1;
-        ldr     x0, [sp, ULCARRY]
-        mov     x1, 1
-        str     x1, [x0]
+        mov     x0, 1
+        str     x0, [sp, ULCARRY]
 
 endSecondOverflowCheck:
         // oSum->aulDigits[lIndex] = ulSum;
-        ldr     x0, OSUM
-        add     x0, x0, AULDIGITS
-        ldr     x1, [sp, LINDEX]
-        add     x0, x0, x1, lsl 3
-        ldr     x3, [sp, ULSUM]
-        str     x3, [x0]
+        ldr     x0, [sp, ULSUM]
+        ldr     x1, [sp, OSUM]
+        ldr     x1, [x1, AULDIGITS]
+        ldr     x2, [sp, LINDEX]
+        str     x0, [x1, x2, lsl 3]
 
         // lIndex++;
-        ldr     x0, [sp, LINDEX]
-        mov     x1, [x0]
-        add     x1, x1, 1
-        str     x1, [x0]
+        mov     x0, 1
+        ldr     x1, [sp, LINDEX]
+        add     x1, x1, x0
+        str     x1, [sp, LINDEX]
 
         // goto whileLoop
         b       whileLoop
@@ -249,26 +231,23 @@ endWhileLoop:
 
 carryOut: 
         // oSum->aulDigits[lSumLength] = 1;
-        ldr     x0, OSUM
-        add     x0, x0, AULDIGITS
-        ldr     x1, [sp, LSUMLENGTH]
-        add     x0, x0, x1, lsl 3
-        mov     x3, 1
-        str     x3, [x0]
-
+        mov     x0, 1
+        ldr     x1, [sp, OSUM]
+        ldr     x1, [x1, AULDIGITS]
+        ldr     x2, [sp, LSUMLENGTH]
+        str     x0, [x1, x2, lsl 3]
+        
         // lSumLength++;
-        ldr     x0, [sp, LSUMLENGTH]
-        mov     x1, [x0]
-        add     x1, x1, 1
-        str     x1, [x0]      
-
-
+        mov     x0, 1
+        ldr     x1, [sp, LSUMLENGTH]
+        add     x1, x1, x0
+        str     x1, [sp, LSUMLENGTH]
+        
 setSumLength: 
         // oSum->lLength = lSumLength;
-        ldr     x0, OSUM
-        add     x0, x0, LLENGTH
-        ldr     x1, [sp, LSUMLENGTH]
-        str     x1, [x0]
+        ldr     x0, [sp, LSUMLENGTH]
+        ldr     x1, [sp, OSUM]
+        str     x0, [x1, LLENGTH]
 
         // return TRUE; epilog
         mov     x0, TRUE
