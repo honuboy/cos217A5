@@ -19,7 +19,7 @@ static long BigInt_larger(long lLength1, long lLength2)
 {
    long lLarger;
    if (lLength1 <= lLength2) goto larger2;
-   lLarger1 = lLength1;
+   lLarger = lLength1;
    larger2:
       lLarger = lLength2;
    return lLarger;
@@ -67,7 +67,7 @@ int BigInt_add(BigInt_T oAddend1, BigInt_T oAddend2, BigInt_T oSum)
     
     endFirstOverflowCheck:
         if (ulSum >= oAddend2->aulDigits[lIndex]) goto endSecondOverflowCheck;
-        uCarry = 1;
+        ulCarry = 1;
     
     endSecondOverflowCheck:
         oSum->aulDigits[lIndex] = ulSum;
