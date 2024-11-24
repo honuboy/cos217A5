@@ -66,7 +66,7 @@ returnInt:
         // BigInt_T oSum)
         //--------------------------------------------------------------
 
-        .equ    BIGINTLARGER_STACK_BYTECOUNT, 48
+        .equ    BIGINTADD_STACK_BYTECOUNT, 48
         .equ    ULCARRY, 8
         .equ    ULSUM, 16
         .equ    LINDEX, 24
@@ -79,6 +79,10 @@ returnInt:
         
 
 BigInt_add:
+        // Prolog
+        sub     sp, sp, BIGINTADD_STACK_BYTECOUNT
+        str     x30, [sp]
+
         // Determine the larger length.
         // lSumLength = BigInt_larger(oAddend1->lLength, 
         // oAddend2->lLength);
@@ -222,3 +226,45 @@ endSecondOverflowCheck:
         str     x3, [x0]
 
         // lIndex++;
+        ldr     x0, [sp, LINDEX]
+        mov     x1, [x0]
+        add     x1, x1, 1
+        str     x1, [x0]
+
+        // goto whileLoop
+        b       whileLoop
+
+endWhileLoop: 
+        // if (ulCarry != 1) goto setSumLength;
+        ldr     x0, [sp, ULCARRY]
+        mov     x1, 1
+        cmp     x0, x1
+        bne     setSumLength
+
+        // if (lSumLength != MAX_DIGITS) goto carryOut;
+        ldr     x0, [sp, LSUMLENGTH]
+        mov     x1, MAX_DIGITS
+        cmp     x0, x1
+        bne     carryOut
+
+        // return FALSE; epilog
+        mov     x0, FALSE
+        ldr     x30, [sp]
+        add     sp, sp, BIGINTADD_STACK_BYTECOUNT
+        ret
+
+
+carryOut: 
+        // oSum->aulDigits[lSumLength] = 1;
+
+
+        // lSumLength++;
+
+
+setSumLength: 
+        // oSum->lLength = lSumLength;
+
+
+        // return TRUE; epilog
+
+        
