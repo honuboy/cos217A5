@@ -17,12 +17,16 @@ enum {FALSE, TRUE};
 
 static long BigInt_larger(long lLength1, long lLength2)
 {
-   long lLarger;
-   if (lLength1 <= lLength2) goto larger2;
-   lLarger = lLength1;
-   larger2:
-      lLarger = lLength2;
-   return lLarger;
+    long lLarger;
+    if (lLength1 <= lLength2) goto larger2;
+    lLarger = lLength1;
+    goto returnInt;
+
+    larger2:
+        lLarger = lLength2;
+
+    returnInt:
+        return lLarger;
 }
 
 /*--------------------------------------------------------------------*/
@@ -33,23 +37,23 @@ static long BigInt_larger(long lLength1, long lLength2)
 
 int BigInt_add(BigInt_T oAddend1, BigInt_T oAddend2, BigInt_T oSum)
 {
-   unsigned long ulCarry;
-   unsigned long ulSum;
-   long lIndex;
-   long lSumLength;
+    unsigned long ulCarry;
+    unsigned long ulSum;
+    long lIndex;
+    long lSumLength;
 
-   assert(oAddend1 != NULL);
-   assert(oAddend2 != NULL);
-   assert(oSum != NULL);
-   assert(oSum != oAddend1);
-   assert(oSum != oAddend2);
+    assert(oAddend1 != NULL);
+    assert(oAddend2 != NULL);
+    assert(oSum != NULL);
+    assert(oSum != oAddend1);
+    assert(oSum != oAddend2);
 
-   /* Determine the larger length. */
-   lSumLength = BigInt_larger(oAddend1->lLength, oAddend2->lLength);
+    /* Determine the larger length. */
+    lSumLength = BigInt_larger(oAddend1->lLength, oAddend2->lLength);
 
-   /* Clear oSum's array if necessary. */
-   if (oSum->lLength <= lSumLength) goto performAddition;
-   memset(oSum->aulDigits, 0, MAX_DIGITS * sizeof(unsigned long));
+    /* Clear oSum's array if necessary. */
+    if (oSum->lLength <= lSumLength) goto performAddition;
+    memset(oSum->aulDigits, 0, MAX_DIGITS * sizeof(unsigned long));
 
     performAddition:
         ulCarry = 0;
