@@ -10,7 +10,7 @@
 
 .equ    FALSE, 0
 .equ    TRUE, 1
-// .equ    OADDEND1, 48
+.equ    OADDEND1, 48
 .equ    ULCARRY, 24
 .equ    LLENGTH, 0
 .equ    MAX_DIGITS, 32768
@@ -43,7 +43,7 @@ BigInt_larger:
         // if (lLength1 <= lLength2) goto larger2;
         cmp     x0, x1
         ble     larger2
-
+                                    
         // lLarger = lLength1;
         str     x0, [sp, LLARGER]
         b       returnInt
