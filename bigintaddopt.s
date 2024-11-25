@@ -36,8 +36,8 @@ BigInt_larger:
         str     x19, [sp, 8]
         str     x20, [sp, 16]
         str     x21, [sp, 24]
-        mov     x0, LLENGTH1
-        mov     x1, LLENGTH2
+        mov     LLENGTH1, x0
+        mov     LLENGTH2, x1
 
         // if (lLength1 <= lLength2) goto larger2;
         cmp     LLENGTH1, LLENGTH2
@@ -75,14 +75,14 @@ returnInt:
         .equ    BIGINTADD_STACK_BYTECOUNT, 64
 
         // stack offsets
-        ULCARRY .req    x19
-        ULSUM   .req    x20
-        LINDEX  .req    x21
-        LSUMLENGTH .req x22
-        .equ    OADDEND1, 40
-        .equ    OADDEND2, 48
-        .equ    OSUM, 56
-        
+        ULCARRY     .req    x19
+        ULSUM       .req    x20
+        LINDEX      .req    x21
+        LSUMLENGTH  .req    x22
+        OADDEND1    .req    x23
+        OADDEND2    .req    x24
+        OSUM        .req    x25
+                
         // LLENGTH, AULDIGITS: struct offsets
         .equ    LLENGTH, 0
         .equ    AULDIGITS, 8
@@ -93,9 +93,10 @@ BigInt_add:
         // Prolog
         sub     sp, sp, BIGINTADD_STACK_BYTECOUNT
         str     x30, [sp]
-        str     x0, [sp, OADDEND1]
-        str     x1, [sp, OADDEND2]
-        str     x2, [sp, OSUM]
+        str     x19, [sp, 8]
+        str     x20, [sp, 16]
+        mov     OADDEND1, x0
+        mov     OADDEND2, x1
 
         // Determine the larger length.
         // lSumLength = BigInt_larger(oAddend1->lLength, 
