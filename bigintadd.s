@@ -3,9 +3,14 @@
 // Author: Jonah Johnson and Jeffrey Xu
 //----------------------------------------------------------------------
 
+
+// notes of edits: this .equ up here for OADDEND1: not necessary?
+// not sure whether or not the line needs to be commented out in 155/178 
+// (or somewhere near that, things shift)
+
 .equ    FALSE, 0
 .equ    TRUE, 1
-.equ    OADDEND1, 48
+// .equ    OADDEND1, 48
 .equ    ULCARRY, 24
 .equ    LLENGTH, 0
 .equ    MAX_DIGITS, 32768
@@ -82,17 +87,22 @@ returnInt:
         .equ    AULDIGITS, 8
         .equ    SIZEOFUL, 8
 
+        .global BigInt_add
+
 BigInt_add:
         // Prolog
         sub     sp, sp, BIGINTADD_STACK_BYTECOUNT
         str     x30, [sp]
+        str     x0, [sp, OADDEND1]
+        str     x1, [sp, OADDEND2]
+        str     x2, [sp, OSUM]
 
         // Determine the larger length.
         // lSumLength = BigInt_larger(oAddend1->lLength, 
         // oAddend2->lLength);
 
         ldr     x0, [sp, OADDEND1]
-        ldr     x0, [x0, LLENGTH] 
+        ldr     x0, [x0, LLENGTH]
         ldr     x1, [sp, OADDEND2]
         ldr     x1, [x1, LLENGTH]
 
@@ -145,13 +155,12 @@ whileLoop:
 
         // ulSum += oAddend1->aulDigits[lIndex];
         ldr     x0, [sp, ULSUM]
-        ldr     x0, [x0]
         ldr     x1, [sp, OADDEND1]
         add     x1, x1, AULDIGITS
         ldr     x2, [sp, LINDEX]
         ldr     x2, [x1, x2, lsl 3]
         add     x2, x2, x0
-        str     x2, [x0]
+        str     x2, [sp, ULSUM]
 
         // if (ulSum >= oAddend1->aulDigits[lIndex]) goto 
         // endFirstOverflowCheck;
@@ -170,13 +179,12 @@ whileLoop:
 endFirstOverflowCheck:
         // ulSum += oAddend2->aulDigits[lIndex];
         ldr     x0, [sp, ULSUM]
-        ldr     x0, [x0]
         ldr     x1, [sp, OADDEND2]
         add     x1, x1, AULDIGITS
         ldr     x2, [sp, LINDEX]
         ldr     x2, [x1, x2, lsl 3]
         add     x2, x2, x0
-        str     x2, [x0]
+        str     x2, [sp, ULSUM]
 
         // if (ulSum >= oAddend2->aulDigits[lIndex]) goto 
         // endSecondOverflowCheck;
@@ -194,11 +202,13 @@ endFirstOverflowCheck:
 
 endSecondOverflowCheck:
         // oSum->aulDigits[lIndex] = ulSum;
-        ldr     x0, [sp, ULSUM]
+        mov     x0, sp
+        add     x0, x0, ULSUM
         ldr     x1, [sp, OSUM]
-        ldr     x1, [x1, AULDIGITS]
+        add     x1, x1, AULDIGITS
         ldr     x2, [sp, LINDEX]
-        str     x0, [x1, x2, lsl 3]
+        ldr     x3, [x1, x2, lsl 3]
+        str     x3, [x0]
 
         // lIndex++;
         mov     x0, 1
@@ -233,7 +243,7 @@ carryOut:
         // oSum->aulDigits[lSumLength] = 1;
         mov     x0, 1
         ldr     x1, [sp, OSUM]
-        ldr     x1, [x1, AULDIGITS]
+        add     x1, x1, AULDIGITS
         ldr     x2, [sp, LSUMLENGTH]
         str     x0, [x1, x2, lsl 3]
         
@@ -255,4 +265,5 @@ setSumLength:
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
 
+        .size BigInt_add, (. - BigInt_add)
         
