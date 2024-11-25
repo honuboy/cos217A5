@@ -10,9 +10,6 @@
 
 .equ    FALSE, 0
 .equ    TRUE, 1
-// .equ    OADDEND1, 48
-.equ    ULCARRY, 24
-.equ    LLENGTH, 0
 .equ    MAX_DIGITS, 32768
 
         .section .rodata
@@ -32,13 +29,17 @@
         //--------------------------------------------------------------
 
         // Must be a multiple of 16
-        .equ    BIGINTLARGER_STACK_BYTECOUNT, 16
+        .equ    BIGINTLARGER_STACK_BYTECOUNT, 32
         .equ    LLARGER, 8
+        .equ    LLENGTH1, 16
+        .equ    LLENGTH2, 24
 
 BigInt_larger:
         // Prolog
         sub     sp, sp, BIGINTLARGER_STACK_BYTECOUNT
         str     x30, [sp]
+        str     x0, [sp, LLENGTH1]
+        str     x1, [sp, LLENGTH2]
 
         // if (lLength1 <= lLength2) goto larger2;
         cmp     x0, x1
@@ -82,10 +83,8 @@ returnInt:
         .equ    OSUM, 56
         
         // LLENGTH, AULDIGITS: struct offsets
-        // SIZEOFUL: constant
         .equ    LLENGTH, 0
         .equ    AULDIGITS, 8
-        .equ    SIZEOFUL, 8
 
         .global BigInt_add
 
@@ -159,18 +158,14 @@ whileLoop:
         add     x1, x1, AULDIGITS
         ldr     x2, [sp, LINDEX]
         ldr     x2, [x1, x2, lsl 3]
-        add     x2, x2, x0
-        str     x2, [sp, ULSUM]
+        add     x0, x2, x0
+        str     x0, [sp, ULSUM]
 
         // if (ulSum >= oAddend1->aulDigits[lIndex]) goto 
         // endFirstOverflowCheck;
-        ldr     x0, [sp, ULSUM]
-        ldr     x1, [sp, OADDEND1]
-        add     x1, x1, AULDIGITS
-        ldr     x2, [sp, LINDEX]
-        ldr     x2, [x1, x2, lsl 3]
+        // x0 still contains ULSUM, x2 still contains array cell
         cmp     x0, x2
-        bge     endFirstOverflowCheck
+        bhs     endFirstOverflowCheck
 
         // ulCarry = 1;
         mov     x0, 1
@@ -183,18 +178,14 @@ endFirstOverflowCheck:
         add     x1, x1, AULDIGITS
         ldr     x2, [sp, LINDEX]
         ldr     x2, [x1, x2, lsl 3]
-        add     x2, x2, x0
-        str     x2, [sp, ULSUM]
+        add     x0, x2, x0
+        str     x0, [sp, ULSUM]
 
         // if (ulSum >= oAddend2->aulDigits[lIndex]) goto 
         // endSecondOverflowCheck;
-        ldr     x0, [sp, ULSUM]
-        ldr     x1, [sp, OADDEND2]
-        add     x1, x1, AULDIGITS
-        ldr     x2, [sp, LINDEX]
-        ldr     x2, [x1, x2, lsl 3]
+        // x0 still contains ULSUM, x2 still contains array cell
         cmp     x0, x2
-        bge     endSecondOverflowCheck
+        bhs     endSecondOverflowCheck
 
         // ulCarry = 1;
         mov     x0, 1
@@ -209,10 +200,9 @@ endSecondOverflowCheck:
         str     x0, [x1, x2, lsl 3]
 
         // lIndex++;
-        mov     x0, 1
-        ldr     x1, [sp, LINDEX]
-        add     x1, x1, x0
-        str     x1, [sp, LINDEX]
+        ldr     x0, [sp, LINDEX]
+        add     x0, x0, 1
+        str     x0, [sp, LINDEX]
 
         // goto whileLoop
         b       whileLoop
@@ -220,18 +210,16 @@ endSecondOverflowCheck:
 endWhileLoop: 
         // if (ulCarry != 1) goto setSumLength;
         ldr     x0, [sp, ULCARRY]
-        mov     x1, 1
-        cmp     x0, x1
+        cmp     x0, 1
         bne     setSumLength
 
         // if (lSumLength != MAX_DIGITS) goto carryOut;
         ldr     x0, [sp, LSUMLENGTH]
-        mov     x1, MAX_DIGITS
-        cmp     x0, x1
+        cmp     x0, MAX_DIGITS
         bne     carryOut
 
         // return FALSE; epilog
-        mov     x0, FALSE
+        mov     w0, FALSE
         ldr     x30, [sp]
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
@@ -257,7 +245,7 @@ setSumLength:
         str     x0, [x1, LLENGTH]
 
         // return TRUE; epilog
-        mov     x0, TRUE
+        mov     w0, TRUE
         ldr     x30, [sp]
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
