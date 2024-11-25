@@ -10,7 +10,7 @@
 
 .equ    FALSE, 0
 .equ    TRUE, 1
-.equ    OADDEND1, 48
+// .equ    OADDEND1, 48
 .equ    ULCARRY, 24
 .equ    LLENGTH, 0
 .equ    MAX_DIGITS, 32768
@@ -203,7 +203,7 @@ endFirstOverflowCheck:
 endSecondOverflowCheck:
         // oSum->aulDigits[lIndex] = ulSum;
         ldr     x0, [sp, ULSUM]
-        ldr     x1, [sp, ULSUM]
+        ldr     x1, [sp, OSUM]
         add     x1, x1, AULDIGITS
         ldr     x2, [sp, LINDEX]
         str     x0, [x1, x2, lsl 3]
