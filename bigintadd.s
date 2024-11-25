@@ -202,13 +202,11 @@ endFirstOverflowCheck:
 
 endSecondOverflowCheck:
         // oSum->aulDigits[lIndex] = ulSum;
-        mov     x0, sp
-        add     x0, x0, ULSUM
-        ldr     x1, [sp, OSUM]
+        ldr     x0, [sp, ULSUM]
+        ldr     x1, [sp, ULSUM]
         add     x1, x1, AULDIGITS
         ldr     x2, [sp, LINDEX]
-        ldr     x3, [x1, x2, lsl 3]
-        str     x3, [x0]
+        str     x0, [x1, x2, lsl 3]
 
         // lIndex++;
         mov     x0, 1
@@ -237,7 +235,6 @@ endWhileLoop:
         ldr     x30, [sp]
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
-
 
 carryOut: 
         // oSum->aulDigits[lSumLength] = 1;
