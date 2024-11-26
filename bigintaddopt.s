@@ -148,7 +148,7 @@ whileLoop:
 
         // ulSum += oAddend1->aulDigits[lIndex];
         ldr     x0, [OADDEND1, AULDIGITS]
-        ldr     x1, [LINDEX, lsl 3]
+        ldr     x1, [x0, LINDEX, lsl 3]
         ldr     x1, [x0, x1]
         add     ULSUM, ULSUM, x1
 
@@ -164,7 +164,7 @@ whileLoop:
 endFirstOverflowCheck:
         // ulSum += oAddend2->aulDigits[lIndex];
         ldr     x0, [OADDEND2, AULDIGITS]
-        ldr     x1, [LINDEX, lsl 3]
+        ldr     x1, [x0, LINDEX, lsl 3]
         ldr     x1, [x0, x1]
         add     ULSUM, ULSUM, x1
 
@@ -183,7 +183,7 @@ endSecondOverflowCheck:
         str     ULSUM, [x0, LINDEX, lsl 3]
 
         // lIndex++;
-        add     LINDEX, LINDEX 1
+        add     LINDEX, LINDEX, 1
 
         // goto whileLoop
         b       whileLoop
@@ -221,7 +221,7 @@ carryOut:
         
 setSumLength: 
         // oSum->lLength = lSumLength;
-        str     LSUMLENGTH, [OSUM, LLLENGTH]
+        str     LSUMLENGTH, [OSUM, LLENGTH]
 
         // return TRUE; epilog
         mov     w0, TRUE
