@@ -19,51 +19,6 @@
         .section .text
 
         //--------------------------------------------------------------
-        // Return the larger of lLength1 and lLength2.
-        // long BigInt_larger(long lLength1, long lLength2)
-        //--------------------------------------------------------------
-
-        // Must be a multiple of 16
-        .equ    BIGINTLARGER_STACK_BYTECOUNT, 32
-        LLARGER  .req   x19
-        LLENGTH1 .req   x20
-        LLENGTH2 .req   x21
-
-BigInt_larger:
-        // Prolog
-        sub     sp, sp, BIGINTLARGER_STACK_BYTECOUNT
-        str     x30, [sp]
-        str     x19, [sp, 8]
-        str     x20, [sp, 16]
-        str     x21, [sp, 24]
-        mov     LLENGTH1, x0
-        mov     LLENGTH2, x1
-
-        // if (lLength1 <= lLength2) goto larger2;
-        cmp     LLENGTH1, LLENGTH2
-        ble     larger2
-                                    
-        // lLarger = lLength1;
-        mov     LLARGER, LLENGTH1
-        b       returnInt
-    
-larger2: 
-        // lLarger = lLength2;
-        mov     LLARGER, LLENGTH2
-
-returnInt:
-        // return lLarger, epilog
-        mov     x0, LLARGER
-        ldr     x30, [sp]
-        ldr     x19, [sp, 8]
-        ldr     x20, [sp, 16]
-        ldr     x21, [sp, 24]
-        add     sp, sp, BIGINTLARGER_STACK_BYTECOUNT
-        ret
-
-        .size BigInt_larger, (. - BigInt_larger)
-
-        //--------------------------------------------------------------
         // Assign the sum of oAddend1 and oAddend2 to oSum.  oSum should
         // be distinct from oAddend1 and oAddend2.  Return 0 (FALSE) if 
         // an overflow occurred, and 1 (TRUE) otherwise.
@@ -72,12 +27,12 @@ returnInt:
         //--------------------------------------------------------------
         
         // Must be a multiple of 16
-        .equ    BIGINTADD_STACK_BYTECOUNT, 64
+        .equ    BIGINTADD_STACK_BYTECOUNT, 48
 
         // register alias
-        ULCARRY     .req    x19
-        ULSUM       .req    x20
-        LINDEX      .req    x21
+        ULCARRY     .req    x5
+        ULSUM       .req    x6
+        LINDEX      .req    x7
         LSUMLENGTH  .req    x22
         OADDEND1    .req    x23
         OADDEND2    .req    x24
@@ -93,13 +48,10 @@ BigInt_add:
         // Prolog
         sub     sp, sp, BIGINTADD_STACK_BYTECOUNT
         str     x30, [sp]
-        str     x19, [sp, 8]
-        str     x20, [sp, 16]
-        str     x21, [sp, 24]
-        str     x22, [sp, 32]
-        str     x23, [sp, 40]
-        str     x24, [sp, 48]
-        str     x25, [sp, 56]
+        str     x22, [sp, 8]
+        str     x23, [sp, 16]
+        str     x24, [sp, 24]
+        str     x25, [sp, 32]
         mov     OADDEND1, x0
         mov     OADDEND2, x1
         mov     OSUM, x2
@@ -108,11 +60,16 @@ BigInt_add:
         // lSumLength = BigInt_larger(oAddend1->lLength, 
         // oAddend2->lLength);
 
-        ldr     x0, [OADDEND1, LLENGTH]
+        ldr     LSUMLENGTH, [OADDEND1, LLENGTH]
         ldr     x1, [OADDEND2, LLENGTH]
-        bl      BigInt_larger
-        mov     LSUMLENGTH, x0
+        cmp     LSUMLENGTH, x1
+        bgt     clearArray
 
+larger2: 
+        // move lLength2 into lSumLength
+        mov     LSUMLENGTH, x1
+
+clearArray:
         // Clear oSum's array if necessary.
         // if (oSum->lLength <= lSumLength) goto performAddition;
         ldr     x0, [OSUM, LLENGTH]
@@ -135,10 +92,11 @@ performAddition:
         // lIndex = 0;
         mov     LINDEX, 0
 
-whileLoop:
         // if (lIndex >= lSumLength) goto endWhileLoop;
         cmp     LINDEX, LSUMLENGTH
         bge     endWhileLoop
+
+whileLoop:
 
         // ulSum = ulCarry;
         mov     ULSUM, ULCARRY
@@ -183,8 +141,9 @@ endSecondOverflowCheck:
         // lIndex++;
         add     LINDEX, LINDEX, 1
 
-        // goto whileLoop
-        b       whileLoop
+        // if (lIndex < lSumLength) goto whileLoop;
+        cmp     LINDEX, LSUMLENGTH
+        blt     whileLoop
 
 endWhileLoop: 
         // if (ulCarry != 1) goto setSumLength;
@@ -198,13 +157,10 @@ endWhileLoop:
         // return FALSE; epilog
         mov     w0, FALSE
         ldr     x30, [sp]
-        ldr     x19, [sp, 8]
-        ldr     x20, [sp, 16]
-        ldr     x21, [sp, 24]
-        ldr     x22, [sp, 32]
-        ldr     x23, [sp, 40]
-        ldr     x24, [sp, 48]
-        ldr     x25, [sp, 56]
+        ldr     x22, [sp, 8]
+        ldr     x23, [sp, 16]
+        ldr     x24, [sp, 24]
+        ldr     x25, [sp, 32]
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
 
@@ -224,13 +180,10 @@ setSumLength:
         // return TRUE; epilog
         mov     w0, TRUE
         ldr     x30, [sp]
-        ldr     x19, [sp, 8]
-        ldr     x20, [sp, 16]
-        ldr     x21, [sp, 24]
-        ldr     x22, [sp, 32]
-        ldr     x23, [sp, 40]
-        ldr     x24, [sp, 48]
-        ldr     x25, [sp, 56]
+        ldr     x22, [sp, 8]
+        ldr     x23, [sp, 16]
+        ldr     x24, [sp, 24]
+        ldr     x25, [sp, 32]
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
 
