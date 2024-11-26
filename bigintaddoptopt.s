@@ -37,6 +37,7 @@
         OADDEND1    .req    x23
         OADDEND2    .req    x24
         OSUM        .req    x25
+        MEMSETFLAG  .req    x9
                 
         // LLENGTH, AULDIGITS: struct offsets
         .equ    LLENGTH, 0
@@ -48,10 +49,6 @@ BigInt_add:
         // Prolog
         sub     sp, sp, BIGINTADD_STACK_BYTECOUNT
         str     x30, [sp]
-        str     x22, [sp, 8]
-        str     x23, [sp, 16]
-        str     x24, [sp, 24]
-        str     x25, [sp, 32]
         mov     OADDEND1, x0
         mov     OADDEND2, x1
         mov     OSUM, x2
@@ -74,7 +71,19 @@ clearArray:
         // if (oSum->lLength <= lSumLength) goto performAddition;
         ldr     x0, [OSUM, LLENGTH]
         cmp     x0, LSUMLENGTH
+
+        // set flag to 0
+        mov     x9, 0
+
         ble     performAddition
+
+        // set the flag in x9 
+        mov     x9, 1
+
+        str     x22, [sp, 8]
+        str     x23, [sp, 16]
+        str     x24, [sp, 24]
+        str     x25, [sp, 32]
 
         // memset(oSum->aulDigits, 0, MAX_DIGITS * 
         // sizeof(unsigned long));
@@ -157,10 +166,15 @@ endWhileLoop:
         // return FALSE; epilog
         mov     w0, FALSE
         ldr     x30, [sp]
+        // check the flag
+        cmp     x9, xzr
+        beq     restoreReg1
         ldr     x22, [sp, 8]
         ldr     x23, [sp, 16]
         ldr     x24, [sp, 24]
         ldr     x25, [sp, 32]
+
+restoreReg1:
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
 
@@ -180,10 +194,16 @@ setSumLength:
         // return TRUE; epilog
         mov     w0, TRUE
         ldr     x30, [sp]
+
+        //check the flag
+        cmp     x9, xzr
+        beq     restoreReg2
         ldr     x22, [sp, 8]
         ldr     x23, [sp, 16]
         ldr     x24, [sp, 24]
         ldr     x25, [sp, 32]
+
+restoreReg2:
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
 
