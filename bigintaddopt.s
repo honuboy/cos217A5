@@ -95,35 +95,33 @@ BigInt_add:
         str     x30, [sp]
         str     x19, [sp, 8]
         str     x20, [sp, 16]
+        str     x21, [sp, 24]
+        str     x22, [sp, 32]
+        str     x23, [sp, 40]
+        str     x24, [sp, 48]
+        str     x25, [sp, 56]
         mov     OADDEND1, x0
         mov     OADDEND2, x1
+        mov     OSUM, x2
 
         // Determine the larger length.
         // lSumLength = BigInt_larger(oAddend1->lLength, 
         // oAddend2->lLength);
 
-        ldr     x0, [sp, OADDEND1]
-        ldr     x0, [x0, LLENGTH]
-        ldr     x1, [sp, OADDEND2]
-        ldr     x1, [x1, LLENGTH]
-
-        // call function BigInt_larger
+        ldr     x0, [OADDEND1, LLENGTH]
+        ldr     x1, [OADDEND2, LLENGTH]
         bl      BigInt_larger
-        
-        // lSumLength gets return value
-        str     x0, [sp, LSUMLENGTH]
+        mov     LSUMLENGTH, x0
 
         // Clear oSum's array if necessary.
         // if (oSum->lLength <= lSumLength) goto performAddition;
-        ldr     x0, [sp, OSUM]
-        ldr     x0, [x0, LLENGTH]
-        ldr     x1, [sp, LSUMLENGTH]
-        cmp     x0, x1
+        ldr     x0, [OSUM, LLENGTH]
+        cmp     x0, LSUMLENGTH
         ble     performAddition
 
         // memset(oSum->aulDigits, 0, MAX_DIGITS * 
         // sizeof(unsigned long));
-        ldr     x0, [sp, OSUM]
+        mov     x0, OSUM
         add     x0, x0, AULDIGITS
         mov     w1, 0
         mov     x2, MAX_DIGITS
@@ -132,123 +130,109 @@ BigInt_add:
 
 performAddition:
         // ulCarry = 0;
-        mov     x0, 0
-        str     x0, [sp, ULCARRY]
+        mov     ULCARRY, 0
 
         // lIndex = 0;
-        mov     x0, 0
-        str     x0, [sp, LINDEX]
+        mov     LINDEX, 0
 
 whileLoop:
         // if (lIndex >= lSumLength) goto endWhileLoop;
-        ldr     x0, [sp, LINDEX]
-        ldr     x1, [sp, LSUMLENGTH]
-        cmp     x0, x1
+        cmp     LINDEX, LSUMLENGTH
         bge     endWhileLoop
 
         // ulSum = ulCarry;
-        ldr     x0, [sp, ULCARRY]
-        str     x0, [sp, ULSUM]
+        mov     ULSUM, ULCARRY
 
         // ulCarry = 0;
-        mov     x0, 0
-        str     x0, [sp, ULCARRY]
+        mov     ULCARRY, 0
 
         // ulSum += oAddend1->aulDigits[lIndex];
-        ldr     x0, [sp, ULSUM]
-        ldr     x1, [sp, OADDEND1]
-        add     x1, x1, AULDIGITS
-        ldr     x2, [sp, LINDEX]
-        ldr     x2, [x1, x2, lsl 3]
-        add     x0, x2, x0
-        str     x0, [sp, ULSUM]
+        ldr     x0, [OADDEND1, AULDIGITS]
+        ldr     x1, [LINDEX, lsl 3]
+        ldr     x1, [x0, x1]
+        add     ULSUM, ULSUM, x1
 
         // if (ulSum >= oAddend1->aulDigits[lIndex]) goto 
         // endFirstOverflowCheck;
         // x0 still contains ULSUM, x2 still contains array cell
-        cmp     x0, x2
+        cmp     ULSUM, x1
         bhs     endFirstOverflowCheck
 
         // ulCarry = 1;
-        mov     x0, 1
-        str     x0, [sp, ULCARRY]
+        mov     ULCARRY, 1
 
 endFirstOverflowCheck:
         // ulSum += oAddend2->aulDigits[lIndex];
-        ldr     x0, [sp, ULSUM]
-        ldr     x1, [sp, OADDEND2]
-        add     x1, x1, AULDIGITS
-        ldr     x2, [sp, LINDEX]
-        ldr     x2, [x1, x2, lsl 3]
-        add     x0, x2, x0
-        str     x0, [sp, ULSUM]
+        ldr     x0, [OADDEND2, AULDIGITS]
+        ldr     x1, [LINDEX, lsl 3]
+        ldr     x1, [x0, x1]
+        add     ULSUM, ULSUM, x1
 
         // if (ulSum >= oAddend2->aulDigits[lIndex]) goto 
         // endSecondOverflowCheck;
         // x0 still contains ULSUM, x2 still contains array cell
-        cmp     x0, x2
+        cmp     ULSUM, x1
         bhs     endSecondOverflowCheck
 
         // ulCarry = 1;
-        mov     x0, 1
-        str     x0, [sp, ULCARRY]
+        mov     ULCARRY, 1
 
 endSecondOverflowCheck:
         // oSum->aulDigits[lIndex] = ulSum;
-        ldr     x0, [sp, ULSUM]
-        ldr     x1, [sp, OSUM]
-        add     x1, x1, AULDIGITS
-        ldr     x2, [sp, LINDEX]
-        str     x0, [x1, x2, lsl 3]
+        ldr     x0, [OSUM, AULDIGITS]
+        str     ULSUM, [x0, LINDEX, lsl 3]
 
         // lIndex++;
-        ldr     x0, [sp, LINDEX]
-        add     x0, x0, 1
-        str     x0, [sp, LINDEX]
+        add     LINDEX, LINDEX 1
 
         // goto whileLoop
         b       whileLoop
 
 endWhileLoop: 
         // if (ulCarry != 1) goto setSumLength;
-        ldr     x0, [sp, ULCARRY]
-        cmp     x0, 1
+        cmp     ULCARRY, 1
         bne     setSumLength
 
         // if (lSumLength != MAX_DIGITS) goto carryOut;
-        ldr     x0, [sp, LSUMLENGTH]
-        cmp     x0, MAX_DIGITS
+        cmp     LSUMLENGTH, MAX_DIGITS
         bne     carryOut
 
         // return FALSE; epilog
         mov     w0, FALSE
         ldr     x30, [sp]
+        ldr     x19, [sp, 8]
+        ldr     x20, [sp, 16]
+        ldr     x21, [sp, 24]
+        ldr     x22, [sp, 32]
+        ldr     x23, [sp, 40]
+        ldr     x24, [sp, 48]
+        ldr     x25, [sp, 56]
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
 
 carryOut: 
         // oSum->aulDigits[lSumLength] = 1;
         mov     x0, 1
-        ldr     x1, [sp, OSUM]
-        add     x1, x1, AULDIGITS
-        ldr     x2, [sp, LSUMLENGTH]
-        str     x0, [x1, x2, lsl 3]
+        ldr     x1, [OSUM, AULDIGITS]
+        str     x0, [x1, LSUMLENGTH, lsl 3]
         
         // lSumLength++;
-        mov     x0, 1
-        ldr     x1, [sp, LSUMLENGTH]
-        add     x1, x1, x0
-        str     x1, [sp, LSUMLENGTH]
+        add     LSUMLENGTH, LSUMLENGTH, 1
         
 setSumLength: 
         // oSum->lLength = lSumLength;
-        ldr     x0, [sp, LSUMLENGTH]
-        ldr     x1, [sp, OSUM]
-        str     x0, [x1, LLENGTH]
+        str     LSUMLENGTH, [OSUM, LLLENGTH]
 
         // return TRUE; epilog
         mov     w0, TRUE
         ldr     x30, [sp]
+        ldr     x19, [sp, 8]
+        ldr     x20, [sp, 16]
+        ldr     x21, [sp, 24]
+        ldr     x22, [sp, 32]
+        ldr     x23, [sp, 40]
+        ldr     x24, [sp, 48]
+        ldr     x25, [sp, 56]
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
 
