@@ -147,9 +147,8 @@ whileLoop:
         mov     ULCARRY, 0
 
         // ulSum += oAddend1->aulDigits[lIndex];
-        ldr     x0, [OADDEND1, AULDIGITS]
+        add     x0, OADDEND1, AULDIGITS
         ldr     x1, [x0, LINDEX, lsl 3]
-        ldr     x1, [x0, x1]
         add     ULSUM, ULSUM, x1
 
         // if (ulSum >= oAddend1->aulDigits[lIndex]) goto 
@@ -163,9 +162,8 @@ whileLoop:
 
 endFirstOverflowCheck:
         // ulSum += oAddend2->aulDigits[lIndex];
-        ldr     x0, [OADDEND2, AULDIGITS]
+        add     x0, OADDEND2, AULDIGITS
         ldr     x1, [x0, LINDEX, lsl 3]
-        ldr     x1, [x0, x1]
         add     ULSUM, ULSUM, x1
 
         // if (ulSum >= oAddend2->aulDigits[lIndex]) goto 
@@ -179,7 +177,7 @@ endFirstOverflowCheck:
 
 endSecondOverflowCheck:
         // oSum->aulDigits[lIndex] = ulSum;
-        ldr     x0, [OSUM, AULDIGITS]
+        add     x0, OSUM, AULDIGITS
         str     ULSUM, [x0, LINDEX, lsl 3]
 
         // lIndex++;
@@ -213,7 +211,7 @@ endWhileLoop:
 carryOut: 
         // oSum->aulDigits[lSumLength] = 1;
         mov     x0, 1
-        ldr     x1, [OSUM, AULDIGITS]
+        add     x1, OSUM, AULDIGITS
         str     x0, [x1, LSUMLENGTH, lsl 3]
         
         // lSumLength++;
