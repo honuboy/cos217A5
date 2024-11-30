@@ -93,9 +93,6 @@ clearArray:
         bl      memset
 
 performAddition:
-        // ulCarry = 0;
-        mov     ULCARRY, 0
-
         // lIndex = 0;
         mov     LINDEX, 0
 
@@ -127,7 +124,7 @@ whileLoop:
         blt     whileLoop
 
 endWhileLoop: 
-        // if (ulCarry != 1) goto setSumLength;
+        // if carry flag is 0 goto setSumLength;
         blo     setSumLength
 
         // if (lSumLength != MAX_DIGITS) goto carryOut;
