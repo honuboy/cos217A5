@@ -96,7 +96,7 @@ clearArray:
 
 performAddition:
         // ulCarry = 0;
-        mov     ULCARRY, 0
+        adds    x0, xzr, xzr
 
         // lIndex = 0;
         mov     LINDEX, 0
@@ -107,42 +107,14 @@ performAddition:
 
 whileLoop:
 
-        // ulSum = ulCarry;
-        mov     ULSUM, ULCARRY
-
-        // ulCarry = 0;
-        mov     ULCARRY, 0
-
-        // ulSum += oAddend1->aulDigits[lIndex];
+        // ulSum = oAddend1->aulDigits[lIndex] + oAddend2() + C
         add     x0, OADDEND1, AULDIGITS
         ldr     x1, [x0, LINDEX, lsl 3]
-        add     ULSUM, ULSUM, x1
-
-        // if (ulSum >= oAddend1->aulDigits[lIndex]) goto 
-        // endFirstOverflowCheck;
-        // x0 still contains ULSUM, x2 still contains array cell
-        cmp     ULSUM, x1
-        bhs     endFirstOverflowCheck
-
-        // ulCarry = 1;
-        mov     ULCARRY, 1
-
-endFirstOverflowCheck:
-        // ulSum += oAddend2->aulDigits[lIndex];
         add     x0, OADDEND2, AULDIGITS
-        ldr     x1, [x0, LINDEX, lsl 3]
-        add     ULSUM, ULSUM, x1
+        ldr     x2, [x0, LINDEX, lsl 3]
+        adcs    ULSUM, x1, x2
+        adc    x4, xzr, xzr
 
-        // if (ulSum >= oAddend2->aulDigits[lIndex]) goto 
-        // endSecondOverflowCheck;
-        // x0 still contains ULSUM, x2 still contains array cell
-        cmp     ULSUM, x1
-        bhs     endSecondOverflowCheck
-
-        // ulCarry = 1;
-        mov     ULCARRY, 1
-
-endSecondOverflowCheck:
         // oSum->aulDigits[lIndex] = ulSum;
         add     x0, OSUM, AULDIGITS
         str     ULSUM, [x0, LINDEX, lsl 3]
@@ -156,8 +128,8 @@ endSecondOverflowCheck:
 
 endWhileLoop: 
         // if (ulCarry != 1) goto setSumLength;
-        cmp     ULCARRY, 1
-        bne     setSumLength
+        cmp     x4, xzr
+        beq     setSumLength
 
         // if (lSumLength != MAX_DIGITS) goto carryOut;
         cmp     LSUMLENGTH, MAX_DIGITS
