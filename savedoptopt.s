@@ -113,7 +113,7 @@ whileLoop:
         add     x0, OADDEND2, AULDIGITS
         ldr     x2, [x0, LINDEX, lsl 3]
         adcs    ULSUM, x1, x2
-        adc    x4, xzr, xzr
+        adc     x4, xzr, xzr
 
         // oSum->aulDigits[lIndex] = ulSum;
         add     x0, OSUM, AULDIGITS
