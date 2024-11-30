@@ -27,13 +27,12 @@
         //--------------------------------------------------------------
         
         // Must be a multiple of 16
-        .equ    BIGINTADD_STACK_BYTECOUNT, 48
+        .equ    BIGINTADD_STACK_BYTECOUNT, 32
 
         // register alias
-        ULCARRY     .req    x5
+        LSUMLENGTH  .req    x5
         ULSUM       .req    x6
         LINDEX      .req    x7
-        LSUMLENGTH  .req    x22
         OADDEND1    .req    x23
         OADDEND2    .req    x24
         OSUM        .req    x25
@@ -80,10 +79,9 @@ clearArray:
         // set the flag in x9 
         mov     x9, 1
 
-        str     x22, [sp, 8]
-        str     x23, [sp, 16]
-        str     x24, [sp, 24]
-        str     x25, [sp, 32]
+        str     x23, [sp, 8]
+        str     x24, [sp, 16]
+        str     x25, [sp, 24]
 
         // memset(oSum->aulDigits, 0, MAX_DIGITS * 
         // sizeof(unsigned long));
@@ -107,42 +105,16 @@ performAddition:
 
 whileLoop:
 
-        // ulSum = ulCarry;
-        mov     ULSUM, ULCARRY
-
-        // ulCarry = 0;
-        mov     ULCARRY, 0
-
         // ulSum += oAddend1->aulDigits[lIndex];
         add     x0, OADDEND1, AULDIGITS
         ldr     x1, [x0, LINDEX, lsl 3]
-        add     ULSUM, ULSUM, x1
 
-        // if (ulSum >= oAddend1->aulDigits[lIndex]) goto 
-        // endFirstOverflowCheck;
-        // x0 still contains ULSUM, x2 still contains array cell
-        cmp     ULSUM, x1
-        bhs     endFirstOverflowCheck
-
-        // ulCarry = 1;
-        mov     ULCARRY, 1
-
-endFirstOverflowCheck:
-        // ulSum += oAddend2->aulDigits[lIndex];
         add     x0, OADDEND2, AULDIGITS
-        ldr     x1, [x0, LINDEX, lsl 3]
-        add     ULSUM, ULSUM, x1
+        ldr     x2, [x0, LINDEX, lsl 3]
 
-        // if (ulSum >= oAddend2->aulDigits[lIndex]) goto 
-        // endSecondOverflowCheck;
-        // x0 still contains ULSUM, x2 still contains array cell
-        cmp     ULSUM, x1
-        bhs     endSecondOverflowCheck
+        // ulSum = oAddend1->aulDigits[lIndex] + oAddend2->aulDigits[lIndex] + C;
+        adcs    ULSUM, x1, x2
 
-        // ulCarry = 1;
-        mov     ULCARRY, 1
-
-endSecondOverflowCheck:
         // oSum->aulDigits[lIndex] = ulSum;
         add     x0, OSUM, AULDIGITS
         str     ULSUM, [x0, LINDEX, lsl 3]
@@ -156,8 +128,7 @@ endSecondOverflowCheck:
 
 endWhileLoop: 
         // if (ulCarry != 1) goto setSumLength;
-        cmp     ULCARRY, 1
-        bne     setSumLength
+        blo     setSumLength
 
         // if (lSumLength != MAX_DIGITS) goto carryOut;
         cmp     LSUMLENGTH, MAX_DIGITS
@@ -169,10 +140,9 @@ endWhileLoop:
         // check the flag
         cmp     x9, xzr
         beq     restoreReg1
-        ldr     x22, [sp, 8]
-        ldr     x23, [sp, 16]
-        ldr     x24, [sp, 24]
-        ldr     x25, [sp, 32]
+        ldr     x23, [sp, 8]
+        ldr     x24, [sp, 16]
+        ldr     x25, [sp, 24]
 
 restoreReg1:
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
@@ -198,10 +168,9 @@ setSumLength:
         //check the flag
         cmp     x9, xzr
         beq     restoreReg2
-        ldr     x22, [sp, 8]
-        ldr     x23, [sp, 16]
-        ldr     x24, [sp, 24]
-        ldr     x25, [sp, 32]
+        ldr     x23, [sp, 8]
+        ldr     x24, [sp, 16]
+        ldr     x25, [sp, 24]
 
 restoreReg2:
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
