@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-// bigintaddopt.s
+// bigintaddoptopt.s
 // Author: Jonah Johnson and Jeffrey Xu
 //----------------------------------------------------------------------
 
@@ -30,12 +30,12 @@
         .equ    BIGINTADD_STACK_BYTECOUNT, 32
 
         // register alias
+        OSUM        .req    x4
         LSUMLENGTH  .req    x5
         ULSUM       .req    x6
         LINDEX      .req    x7
-        OADDEND1    .req    x23
-        OADDEND2    .req    x24
-        OSUM        .req    x25
+        OADDEND1    .req    x19
+        OADDEND2    .req    x20
         MEMSETFLAG  .req    x9
                 
         // LLENGTH, AULDIGITS: struct offsets
@@ -61,7 +61,6 @@ BigInt_add:
         cmp     LSUMLENGTH, x1
         bgt     clearArray
 
-larger2: 
         // move lLength2 into lSumLength
         mov     LSUMLENGTH, x1
 
@@ -72,16 +71,15 @@ clearArray:
         cmp     x0, LSUMLENGTH
 
         // set flag to 0
-        mov     x9, 0
+        mov     MEMSETFLAG, 0
 
         ble     performAddition
 
-        // set the flag in x9 
-        mov     x9, 1
+        // set the flag in MEMSETFLAG 
+        mov     MEMSETFLAG, 1
 
-        str     x23, [sp, 8]
-        str     x24, [sp, 16]
-        str     x25, [sp, 24]
+        str     x19, [sp, 8]
+        str     x20, [sp, 16]
 
         // memset(oSum->aulDigits, 0, MAX_DIGITS * 
         // sizeof(unsigned long));
@@ -109,7 +107,8 @@ whileLoop:
         add     x0, OADDEND2, AULDIGITS
         ldr     x2, [x0, LINDEX, lsl 3]
 
-        // ulSum = oAddend1->aulDigits[lIndex] + oAddend2->aulDigits[lIndex] + C;
+        // ulSum = oAddend1->aulDigits[lIndex] + 
+        // oAddend2->aulDigits[lIndex] + C;
         adcs    ULSUM, x1, x2
 
         // oSum->aulDigits[lIndex] = ulSum;
@@ -135,11 +134,10 @@ endWhileLoop:
         mov     w0, FALSE
         ldr     x30, [sp]
         // check the flag
-        cmp     x9, xzr
+        cmp     MEMSETFLAG, xzr
         beq     restoreReg1
-        ldr     x23, [sp, 8]
-        ldr     x24, [sp, 16]
-        ldr     x25, [sp, 24]
+        ldr     x19, [sp, 8]
+        ldr     x20, [sp, 16]
 
 restoreReg1:
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
@@ -163,11 +161,10 @@ setSumLength:
         ldr     x30, [sp]
 
         //check the flag
-        cmp     x9, xzr
+        cmp     MEMSETFLAG, xzr
         beq     restoreReg2
-        ldr     x23, [sp, 8]
-        ldr     x24, [sp, 16]
-        ldr     x25, [sp, 24]
+        ldr     x19, [sp, 8]
+        ldr     x20, [sp, 16]
 
 restoreReg2:
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
