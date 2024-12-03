@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-// bigintaddopt.s
+// bigintaddoptopt.s
 // Author: Jonah Johnson and Jeffrey Xu
 //----------------------------------------------------------------------
 
@@ -27,16 +27,15 @@
         //--------------------------------------------------------------
         
         // Must be a multiple of 16
-        .equ    BIGINTADD_STACK_BYTECOUNT, 48
+        .equ    BIGINTADD_STACK_BYTECOUNT, 32
 
         // register alias
-        ULCARRY     .req    x5
+        OSUM        .req    x4
+        LSUMLENGTH  .req    x5
         ULSUM       .req    x6
         LINDEX      .req    x7
-        LSUMLENGTH  .req    x22
-        OADDEND1    .req    x23
-        OADDEND2    .req    x24
-        OSUM        .req    x25
+        OADDEND1    .req    x19
+        OADDEND2    .req    x20
         MEMSETFLAG  .req    x9
                 
         // LLENGTH, AULDIGITS: struct offsets
@@ -62,7 +61,6 @@ BigInt_add:
         cmp     LSUMLENGTH, x1
         bgt     clearArray
 
-larger2: 
         // move lLength2 into lSumLength
         mov     LSUMLENGTH, x1
 
@@ -73,17 +71,15 @@ clearArray:
         cmp     x0, LSUMLENGTH
 
         // set flag to 0
-        mov     x9, 0
+        mov     MEMSETFLAG, 0
 
         ble     performAddition
 
-        // set the flag in x9 
-        mov     x9, 1
+        // set the flag in MEMSETFLAG 
+        mov     MEMSETFLAG, 1
 
-        str     x22, [sp, 8]
-        str     x23, [sp, 16]
-        str     x24, [sp, 24]
-        str     x25, [sp, 32]
+        str     x19, [sp, 8]
+        str     x20, [sp, 16]
 
         // memset(oSum->aulDigits, 0, MAX_DIGITS * 
         // sizeof(unsigned long));
@@ -95,9 +91,6 @@ clearArray:
         bl      memset
 
 performAddition:
-        // ulCarry = 0;
-        adds    x0, xzr, xzr
-
         // lIndex = 0;
         mov     LINDEX, 0
 
@@ -107,13 +100,16 @@ performAddition:
 
 whileLoop:
 
-        // ulSum = oAddend1->aulDigits[lIndex] + oAddend2() + C
+        // ulSum += oAddend1->aulDigits[lIndex];
         add     x0, OADDEND1, AULDIGITS
         ldr     x1, [x0, LINDEX, lsl 3]
+
         add     x0, OADDEND2, AULDIGITS
         ldr     x2, [x0, LINDEX, lsl 3]
+
+        // ulSum = oAddend1->aulDigits[lIndex] + 
+        // oAddend2->aulDigits[lIndex] + C;
         adcs    ULSUM, x1, x2
-        adc    x4, xzr, xzr
 
         // oSum->aulDigits[lIndex] = ulSum;
         add     x0, OSUM, AULDIGITS
@@ -127,9 +123,8 @@ whileLoop:
         blt     whileLoop
 
 endWhileLoop: 
-        // if (ulCarry != 1) goto setSumLength;
-        cmp     x4, xzr
-        beq     setSumLength
+        // if carry flag is 0 goto setSumLength;
+        blo     setSumLength
 
         // if (lSumLength != MAX_DIGITS) goto carryOut;
         cmp     LSUMLENGTH, MAX_DIGITS
@@ -139,12 +134,10 @@ endWhileLoop:
         mov     w0, FALSE
         ldr     x30, [sp]
         // check the flag
-        cmp     x9, xzr
+        cmp     MEMSETFLAG, xzr
         beq     restoreReg1
-        ldr     x22, [sp, 8]
-        ldr     x23, [sp, 16]
-        ldr     x24, [sp, 24]
-        ldr     x25, [sp, 32]
+        ldr     x19, [sp, 8]
+        ldr     x20, [sp, 16]
 
 restoreReg1:
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
@@ -168,12 +161,10 @@ setSumLength:
         ldr     x30, [sp]
 
         //check the flag
-        cmp     x9, xzr
+        cmp     MEMSETFLAG, xzr
         beq     restoreReg2
-        ldr     x22, [sp, 8]
-        ldr     x23, [sp, 16]
-        ldr     x24, [sp, 24]
-        ldr     x25, [sp, 32]
+        ldr     x19, [sp, 8]
+        ldr     x20, [sp, 16]
 
 restoreReg2:
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
