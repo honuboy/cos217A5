@@ -30,7 +30,6 @@
         .equ    BIGINTADD_STACK_BYTECOUNT, 48
 
         // register alias
-        ULCARRY     .req    x5
         ULSUM       .req    x6
         LINDEX      .req    x7
         LSUMLENGTH  .req    x22
@@ -89,36 +88,36 @@ performAddition:
         // lIndex = 0;
         mov     LINDEX, 0
         // carry reg = 0
-        mov     x3, 0
+        adds    x0, x0, xzr
 
         // if (lIndex >= lSumLength) goto endWhileLoop;
-        cmp     LINDEX, LSUMLENGTH
-        bge     endWhileLoop
+        sub     x0, LINDEX, LSUMLENGTH
+        cbz    x0, endWhileLoop
 
 whileLoop:
-        add     ULSUM, x3, xzr
-
+        // x1 gets digit of oAddend1, x2 gets digit of oAddend2
         add     x0, OADDEND1, AULDIGITS
         ldr     x1, [x0, LINDEX, lsl 3]
-
         add     x0, OADDEND2, AULDIGITS
         ldr     x2, [x0, LINDEX, lsl 3]
 
-        adds    ULSUM, x1, x2
-        adc     x3, xzr, xzr
-
+        // add two digits together, with the carry flag set by last time
+        adcs    ULSUM, x1, x2
+        
+        // store sum into memory
         add     x0, OSUM, AULDIGITS
         str     ULSUM, [x0, LINDEX, lsl 3]
 
+        // lIndex++
         add     LINDEX, LINDEX, 1
+        sub     x0, LSUMLENGTH, LINDEX
 
-        cmp     LINDEX, LSUMLENGTH
-        blt     whileLoop
+        cbnz    x0, whileLoop
 
 endWhileLoop: 
+        
         // if (ulCarry != 1) goto setSumLength;
-        cmp     x3, 1
-        bne     setSumLength
+        bcc     setSumLength
 
         // if (lSumLength != MAX_DIGITS) goto carryOut;
         cmp     LSUMLENGTH, MAX_DIGITS
