@@ -103,13 +103,18 @@ whileLoop:
         // ulSum += oAddend1->aulDigits[lIndex];
         add     x0, OADDEND1, AULDIGITS
         ldr     x1, [x0, LINDEX, lsl 3]
+        adcs    ULSUM, ULSUM, x1
 
         add     x0, OADDEND2, AULDIGITS
         ldr     x2, [x0, LINDEX, lsl 3]
+        bcs     addwithoutcs
+        adcs    ULSUM, ULSUM, x2
+        b       alreadyadded
 
-        // ulSum = oAddend1->aulDigits[lIndex] + 
-        // oAddend2->aulDigits[lIndex] + C;
-        adcs    ULSUM, x1, x2
+addwithoutcs:
+        add    ULSUM, ULSUM, x2
+
+alreadyadded:
 
         // oSum->aulDigits[lIndex] = ulSum;
         add     x0, OSUM, AULDIGITS
@@ -117,6 +122,7 @@ whileLoop:
 
         // lIndex++;
         add     LINDEX, LINDEX, 1
+        cset    ULSUM, CS
 
         // if (lIndex < lSumLength) goto whileLoop;
         cmp     LINDEX, LSUMLENGTH
@@ -124,7 +130,7 @@ whileLoop:
 
 endWhileLoop: 
         // if carry flag is 0 goto setSumLength;
-        blo     setSumLength
+        bcc     setSumLength
 
         // if (lSumLength != MAX_DIGITS) goto carryOut;
         cmp     LSUMLENGTH, MAX_DIGITS
