@@ -112,11 +112,12 @@ whileLoop:
         add     LINDEX, LINDEX, 1
         sub     x0, LSUMLENGTH, LINDEX
 
+        // continue loop if x0 (holding the value LSUMLENGTH - LINDEX)
+        // does not hold a value equal to 0; carries out guarded loop
         cbnz    x0, whileLoop
 
 endWhileLoop: 
-        
-        // if (ulCarry != 1) goto setSumLength;
+        // if carry flag = 0 goto setSumLength;
         bcc     setSumLength
 
         // if (lSumLength != MAX_DIGITS) goto carryOut;
@@ -157,4 +158,3 @@ setSumLength:
         ret
 
         .size BigInt_add, (. - BigInt_add)
-        
