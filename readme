@@ -98,7 +98,49 @@ particular, what bugs are in your submission?
 ------------------------------------------------------------------------
 What is your mywc program test plan?
 
+Boundary tests
 
+mywcempty.txt: empty file; tests corner case where no lines, words, or
+characters are present in the file
+
+mywcnewline.txt: file containing a single \n; tests corner case for \n
+
+mywcsingleword.txt: file containing "hello"; tests corner case for a
+single word contained in the file
+
+mywcsinglechar.txt: file containing 'a'; tests corner case for a single
+character contained in the file
+
+mywcsinglewordnewline.txt: file containing "hello" followed by \n;
+tests small combination of aforementioend corner cases
+
+mywcspacenewline.txt: file containing "help" followed by \n followed
+by "help thanks" followed by three \n; tests small combination of
+aforementioned corner cases
+
+mywcspaces.txt: file containing only spaces; tests to make sure that
+program can distinguish whitespace from words
+
+
+Statement tests
+
+mywcproverb.txt: file containing the Chinese proverb provided on the A5
+spec; tests program for line-, word-, and character-counting
+
+mywcpotpourri.txt: file containing digits 0-9, characters abc, and \n;
+tests word detection, whitespace transitions, and newline handling
+
+Stress tests
+
+mywclargeline.txt: file containing 'a' 10,000 times on a single line; 
+stress-tests program for handling large lines
+
+mywclargemultiline.txt: file containing "hello" 10,000 times placed
+across 10,000 lines (one per line); stress-tests program for handling
+line-, word-, and character-counting for large multi-line files
+
+mywcpattern.txt: file containing the pattern 'a b c d \n' 10,000 times;
+stress-tests program for detecting whitespace from words
 
 ------------------------------------------------------------------------
 What are the CPU times consumed by the programs from Parts 2a, 2b, 2d,
