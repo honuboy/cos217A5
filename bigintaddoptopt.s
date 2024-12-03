@@ -99,7 +99,6 @@ performAddition:
         bge     endWhileLoop
 
 whileLoop:
-
         // ulSum += oAddend1->aulDigits[lIndex];
         add     x0, OADDEND1, AULDIGITS
         ldr     x1, [x0, LINDEX, lsl 3]
@@ -112,17 +111,16 @@ whileLoop:
         b       alreadyadded
 
 addwithoutcs:
-        add    ULSUM, ULSUM, x2
+        add     ULSUM, ULSUM, x2
 
 alreadyadded:
-
         // oSum->aulDigits[lIndex] = ulSum;
         add     x0, OSUM, AULDIGITS
         str     ULSUM, [x0, LINDEX, lsl 3]
 
         // lIndex++;
         add     LINDEX, LINDEX, 1
-        cset    ULSUM, CS
+        cset    ULSUM, C
 
         // if (lIndex < lSumLength) goto whileLoop;
         cmp     LINDEX, LSUMLENGTH
