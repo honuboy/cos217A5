@@ -2,31 +2,38 @@
 #include <stdlib.h>
 #include <time.h>
 
-int main(int argc, char *argv[]) {
-    // Seed the random number generator with current time
-    srand(time(NULL));
+long bytes = 1024; /* Default number of bytes to generate */
 
-    // Determine number of bytes to generate (default 1024 if not specified)
-    long bytes = 1024;
+int is_valid_char(int val) {
+    /* Check if character is in allowed range */
+    return (val == 0x09) ||  /* Horizontal tab */
+           (val == 0x0A) ||  /* Line feed */
+           (val >= 0x20 && val <= 0x7E);
+}
+
+int main(argc, argv)
+    int argc;
+    char *argv[];
+{
+    long i;
+
+    /* Seed random number generator */
+    srand((unsigned int)time(NULL));
+
+    /* Check for user-specified byte count */
     if (argc > 1) {
         bytes = atol(argv[1]);
     }
 
-    // Generate random characters
-    for (long i = 0; i < bytes; i++) {
-        // Generate a random number and mod by 0x7F
+    /* Generate random characters */
+    for (i = 0; i < bytes; i++) {
         int random_val = rand() % 0x7F;
 
-        // Check if the value is in the allowed range
-        if ((random_val == 0x09) ||  // Horizontal tab
-            (random_val == 0x0A) ||  // Line feed
-            (random_val >= 0x20 && random_val <= 0x7E)) {
-            
-            // Write the character to stdout
+        /* Output only valid characters */
+        if (is_valid_char(random_val)) {
             putchar(random_val);
         } else {
-            // If the random value is not in the allowed range, 
-            // decrement the counter to generate another character
+            /* Regenerate character if invalid */
             i--;
         }
     }
