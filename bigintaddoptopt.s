@@ -92,7 +92,7 @@ performAddition:
 
         // if (lIndex >= lSumLength) goto endWhileLoop;
         sub     x0, LINDEX, LSUMLENGTH
-        cbz    x0, endWhileLoop
+        cbz     x0, endWhileLoop
 
 whileLoop:
         // x1 gets digit of oAddend1, x2 gets digit of oAddend2
