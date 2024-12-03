@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-long bytes = 1024; /* Default number of bytes to generate */
+long bytes = 1024; 
 
 int is_valid_char(int val) {
     /* Check if character is in allowed range */
