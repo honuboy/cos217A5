@@ -96,29 +96,32 @@ performAddition:
         bge     endWhileLoop
 
 whileLoop:
-        add     ULSUM, x3, xzr
-
+        // Load the digits from both operands
         add     x0, OADDEND1, AULDIGITS
         ldr     x1, [x0, LINDEX, lsl 3]
 
         add     x0, OADDEND2, AULDIGITS
         ldr     x2, [x0, LINDEX, lsl 3]
 
-        adds    ULSUM, x1, x2
-        adc     x3, xzr, xzr
+        // Add the digits with carry
+        adds    ULSUM, ULSUM, x1    
+        adc     ULSUM, ULSUM, x2
+        adc     x3, xzr, xzr     // x3 = carry from adds
 
+        // Store the result in oSum
         add     x0, OSUM, AULDIGITS
         str     ULSUM, [x0, LINDEX, lsl 3]
 
+        // Increment the index
         add     LINDEX, LINDEX, 1
 
+        // Compare the index with lSumLength
         cmp     LINDEX, LSUMLENGTH
         blt     whileLoop
 
-endWhileLoop: 
-        // if (ulCarry != 1) goto setSumLength;
-        cmp     x3, 1
-        bne     setSumLength
+endWhileLoop:
+        // Check if carry exists after the last addition
+        cbnz    x3, carryOut    // If carry is non-zero, handle it
 
         // if (lSumLength != MAX_DIGITS) goto carryOut;
         cmp     LSUMLENGTH, MAX_DIGITS
