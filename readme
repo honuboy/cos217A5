@@ -128,7 +128,13 @@ mywcproverb.txt: file containing the Chinese proverb provided on the A5
 spec; tests program for line-, word-, and character-counting
 
 mywcpotpourri.txt: file containing digits 0-9, characters abc, and \n;
-tests word detection, whitespace transitions, and newline handling
+tests character/word detection, whitespace transitions, and newline 
+handling
+
+mywcrandom.txt: file containing random ASCII readable characters;
+tests character/word detection, whitespace transitions, and newline
+handling
+
 
 Stress tests
 
