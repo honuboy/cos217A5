@@ -177,8 +177,9 @@ mywclargemultiline.txt: file containing "hello" 1,000 times placed
 across 1,000 lines (one per line); stress-tests program for handling
 line-, word-, and character-counting for large multi-line files
 
-mywcpattern.txt: file containing the pattern 'a b c d \n' 1,000 times;
-stress-tests program for detecting whitespace from words
+mywcmultirandom.txt: file containing 1,000 lines of randomly generated
+ASCII characters; stress-tests program for character/word detection,
+whitespace transitions, and newline handling
 
 ------------------------------------------------------------------------
 What are the CPU times consumed by the programs from Parts 2a, 2b, 2d,
@@ -193,7 +194,3 @@ Part 2d:  7.855271 seconds
 Part 2e:  3.417791 seconds
 
 Part 2f:  2.025132 seconds
-
-
-
-
