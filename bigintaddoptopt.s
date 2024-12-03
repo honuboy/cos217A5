@@ -27,16 +27,16 @@
         //--------------------------------------------------------------
         
         // Must be a multiple of 16
-        .equ    BIGINTADD_STACK_BYTECOUNT, 32
+        .equ    BIGINTADD_STACK_BYTECOUNT, 48
 
         // register alias
-        OSUM        .req    x4
-        LSUMLENGTH  .req    x5
+        ULCARRY     .req    x5
         ULSUM       .req    x6
         LINDEX      .req    x7
-        OADDEND1    .req    x19
-        OADDEND2    .req    x20
-        MEMSETFLAG  .req    x9
+        LSUMLENGTH  .req    x22
+        OADDEND1    .req    x23
+        OADDEND2    .req    x24
+        OSUM        .req    x25
                 
         // LLENGTH, AULDIGITS: struct offsets
         .equ    LLENGTH, 0
@@ -48,6 +48,10 @@ BigInt_add:
         // Prolog
         sub     sp, sp, BIGINTADD_STACK_BYTECOUNT
         str     x30, [sp]
+        str     x22, [sp, 8]
+        str     x23, [sp, 16]
+        str     x24, [sp, 24]
+        str     x25, [sp, 32]
         mov     OADDEND1, x0
         mov     OADDEND2, x1
         mov     OSUM, x2
@@ -61,6 +65,7 @@ BigInt_add:
         cmp     LSUMLENGTH, x1
         bgt     clearArray
 
+larger2: 
         // move lLength2 into lSumLength
         mov     LSUMLENGTH, x1
 
@@ -69,17 +74,7 @@ clearArray:
         // if (oSum->lLength <= lSumLength) goto performAddition;
         ldr     x0, [OSUM, LLENGTH]
         cmp     x0, LSUMLENGTH
-
-        // set flag to 0
-        mov     MEMSETFLAG, 0
-
         ble     performAddition
-
-        // set the flag in MEMSETFLAG 
-        mov     MEMSETFLAG, 1
-
-        str     x19, [sp, 8]
-        str     x20, [sp, 16]
 
         // memset(oSum->aulDigits, 0, MAX_DIGITS * 
         // sizeof(unsigned long));
@@ -93,13 +88,14 @@ clearArray:
 performAddition:
         // lIndex = 0;
         mov     LINDEX, 0
+        // carry reg = 0
+        mov     x3, 0
 
         // if (lIndex >= lSumLength) goto endWhileLoop;
         cmp     LINDEX, LSUMLENGTH
         bge     endWhileLoop
 
 whileLoop:
-        // ulSum += oAddend1->aulDigits[lIndex];
         add     ULSUM, x3, xzr
 
         add     x0, OADDEND1, AULDIGITS
@@ -111,21 +107,18 @@ whileLoop:
         adds    ULSUM, x1, x2
         adc     x3, xzr, xzr
 
-        // oSum->aulDigits[lIndex] = ulSum;
         add     x0, OSUM, AULDIGITS
         str     ULSUM, [x0, LINDEX, lsl 3]
 
-        // lIndex++;
         add     LINDEX, LINDEX, 1
 
-        // if (lIndex < lSumLength) goto whileLoop;
         cmp     LINDEX, LSUMLENGTH
         blt     whileLoop
 
 endWhileLoop: 
-        // if carry flag is 0 goto setSumLength;
-        cmp     x3, xzr
-        beq     setSumLength
+        // if (ulCarry != 1) goto setSumLength;
+        cmp     x3, 1
+        bne     setSumLength
 
         // if (lSumLength != MAX_DIGITS) goto carryOut;
         cmp     LSUMLENGTH, MAX_DIGITS
@@ -134,13 +127,10 @@ endWhileLoop:
         // return FALSE; epilog
         mov     w0, FALSE
         ldr     x30, [sp]
-        // check the flag
-        cmp     MEMSETFLAG, xzr
-        beq     restoreReg1
-        ldr     x19, [sp, 8]
-        ldr     x20, [sp, 16]
-
-restoreReg1:
+        ldr     x22, [sp, 8]
+        ldr     x23, [sp, 16]
+        ldr     x24, [sp, 24]
+        ldr     x25, [sp, 32]
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
 
@@ -160,14 +150,10 @@ setSumLength:
         // return TRUE; epilog
         mov     w0, TRUE
         ldr     x30, [sp]
-
-        //check the flag
-        cmp     MEMSETFLAG, xzr
-        beq     restoreReg2
-        ldr     x19, [sp, 8]
-        ldr     x20, [sp, 16]
-
-restoreReg2:
+        ldr     x22, [sp, 8]
+        ldr     x23, [sp, 16]
+        ldr     x24, [sp, 24]
+        ldr     x25, [sp, 32]
         add     sp, sp, BIGINTADD_STACK_BYTECOUNT
         ret
 
